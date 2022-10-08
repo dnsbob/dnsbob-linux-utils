@@ -1,0 +1,8 @@
+#!/bin/bash
+# gitdiffremote
+# diff local repo vs remote repo, current local branch
+
+branchlong=`git symbolic-ref HEAD`
+branch="${branchlong##*/}"
+git fetch
+git diff "$branch" origin/"$branch"

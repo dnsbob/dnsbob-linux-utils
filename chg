@@ -1,0 +1,89 @@
+#!/bin/bash
+# chg  filename(s)
+# run typical git or rcs commands to edit filename(s)
+errorcode=0
+changed=0
+editor="${EDITOR:-vi}"
+for pathfile in "$@"
+do
+# add ./ if no / in path/filename
+[[ "$pathfile" == */* ]] || pathfile="./$pathfile"
+dir="${pathfile%/*}"
+file="${pathfile##*/}"
+vcs=none
+if [ ! -d "$dir" ]; then
+    echo "dir not found: $dir"
+    errorcode=3
+    exit 3
+fi
+pushd "$dir" > /dev/null
+if [ ! -f "$file" ]; then
+	echo "file not found: $pathfile"
+	errorcode=2
+elif [ -d .git ]; then
+	vcs=git
+elif [ -f RCS/"$file,v" ]; then
+	vcs=rcs
+elif [ -f "${file}",v ]; then
+	vcs=rcs
+else
+	echo "ERROR - did not find RCS or Git dir for $file"
+	errorcode=1
+fi
+
+if [ "$vcs" = "git" ]; then
+	# git works best if we are in the directory
+
+	#### check for unstaged or uncommited changes or changes not pulled
+	#### or changes not pushed?
+
+	# then 
+	# edit the file
+	$editor $file
+	# git diff does not set a return code for changes
+	a=`git diff $file`
+	if [ -n "$a" ]; then
+		# show the changes
+		git diff $file
+		echo "commit comment? (empty comment will not commit the changes) "
+		read ans
+		if [ -z "$ans" ]; then
+			echo "changed, but not commited"
+		else
+			# save changes
+			git add $file
+			git commit -m "$ans" $file
+			### push changes to gitlab / github ???
+			changed=1
+		fi
+	else
+		echo "no changes"
+	fi
+	popd > /dev/null
+elif [ "$vcs" = "rcs" ]; then
+	# rcs
+	co -l $file || exit
+	$editor $file
+	rcsdiff $file
+	ret=$?
+	if [ $ret -eq 1 ]; then
+        echo "save changes? (Yn) "
+		read ans
+		if [ -z "$ans" -o X"$ans" = Xy -o X"$ans" = XY -o X"$ans" = Xyes ]; then
+			ci -u $file
+			changed=1
+		else
+			echo "not saved"
+		fi
+	else
+		ci -u $file
+		echo "no changes"
+	fi
+fi
+# give time to read message before editing the next file
+sleep 1
+done
+if [ $changed = 1 ]; then
+	echo "Please run make if needed"
+fi
+exit $errorcode

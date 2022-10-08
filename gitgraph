@@ -1,0 +1,3 @@
+#!/bin/bash
+# gitgraph
+git log --graph --branches --pretty=oneline --abbrev-commit | more

@@ -1,0 +1,17 @@
+#!/bin/bash
+# gitfind
+status=""
+if [ "status" = "$1" ]; then
+  status="y"
+fi
+
+find ~ /localshare/rharold* -name '.git' -type d -print | while read dir
+do
+  parent=`echo $dir | sed -e 's%/.git$%%'`
+  echo $parent
+  grep 'url = ' $dir/config
+  cat $dir/HEAD | sed -e 's%ref: refs/heads/%	%'
+  if [ "y" = "$status" ]; then
+    (cd $parent; git status)
+  fi
+done
