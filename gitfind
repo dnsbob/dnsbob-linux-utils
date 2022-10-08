@@ -1,17 +1,29 @@
 #!/bin/bash
-# gitfind
-status=""
-if [ "status" = "$1" ]; then
-  status="y"
+# gitfind [-s] [dirs...]
+
+# defaults
+status=n
+dirs=~
+
+while getopts "s" ARG
+do
+  case "$ARG" in
+    s) status=y ;;
+  esac
+done
+shift "$((OPTIND-1))"
+
+if [ $# -gt 0 ]; then
+  dirs="$@"
 fi
 
-find ~ /localshare/rharold* -name '.git' -type d -print | while read dir
+find "$dirs" -name '.git' -type d -print | while read dir
 do
   parent=`echo $dir | sed -e 's%/.git$%%'`
-  echo $parent
+  echo "======== $parent"
   grep 'url = ' $dir/config
   cat $dir/HEAD | sed -e 's%ref: refs/heads/%	%'
   if [ "y" = "$status" ]; then
-    (cd $parent; git status)
+    (cd $parent; git status; echo "")
   fi
 done
