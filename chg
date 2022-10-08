@@ -17,10 +17,12 @@ if [ ! -d "$dir" ]; then
     exit 3
 fi
 pushd "$dir" > /dev/null
+git --no-optional-locks status -s 1>/dev/null 2>&1
+gitret=$?
 if [ ! -f "$file" ]; then
 	echo "file not found: $pathfile"
 	errorcode=2
-elif [ -d .git ]; then
+elif [ $gitret = 0 ]; then
 	vcs=git
 elif [ -f RCS/"$file,v" ]; then
 	vcs=rcs
