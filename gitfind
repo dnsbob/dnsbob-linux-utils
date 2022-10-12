@@ -17,7 +17,7 @@ if [ $# -gt 0 ]; then
   dirs="$@"
 fi
 
-find $dirs -name '.git' -type d -print | while read dir
+find -H $dirs -name '.git' -type d -print | while read dir
 do
   parent=`echo $dir | sed -e 's%/.git$%%'`
   echo "======== $parent"
